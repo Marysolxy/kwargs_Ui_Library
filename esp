@@ -1,0 +1,97 @@
+--Abaixo estar o lib da nossa Ui
+
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/7yhx/kwargs_Ui_Library/main/source.lua"))()
+
+local UI = Lib:Create{
+    Theme = "Dark", -- or any other theme
+    Size = UDim2.new(0, 555, 0, 400) -- default
+ }
+ 
+ local Main = UI:Tab{
+    Name = "Inicio"
+ }
+ 
+ local Divider = Main:Divider{
+    Name = "Inicio shit"
+ }
+ 
+ local QuitDivider = Main:Divider{
+    Name = "Sair"
+ }
+
+ -- Configurações
+local ESPEnabled = true
+local TeamColor = Color3.fromRGB(0, 0, 255) -- Azul para aliados
+local EnemyColor = Color3.fromRGB(255, 0, 0) -- Vermelho para inimigos
+local FOVRadius = 100
+local FOVColor = Color3.fromRGB(255, 255, 0) -- Amarelo para FOV
+
+-- Função para criar ESP
+local function CreateESP(player)
+    local BillboardGui = Instance.new("BillboardGui")
+    BillboardGui.Name = "ESP"
+    BillboardGui.Adornee = player.Character.Head
+    BillboardGui.Size = UDim2.new(1, 0, 1, 0)
+    BillboardGui.AlwaysOnTop = true
+
+    local Frame = Instance.new("Frame", BillboardGui)
+    Frame.Size = UDim2.new(1, 0, 1, 0)
+    Frame.BackgroundTransparency = 0.5
+    Frame.BackgroundColor3 = player.Team == game.Players.LocalPlayer.Team and TeamColor or EnemyColor
+
+    local TextLabel = Instance.new("TextLabel", BillboardGui)
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Text = player.Name
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.TextStrokeTransparency = 0.5
+
+    BillboardGui.Parent = player.Character.Head
+end
+
+-- Função para criar FOV
+local function CreateFOV()
+    local FOVCircle = Drawing.new("Circle")
+    FOVCircle.Radius = FOVRadius
+    FOVCircle.Color = FOVColor
+    FOVCircle.Thickness = 2
+    FOVCircle.NumSides = 100
+    FOVCircle.Filled = false
+    FOVCircle.Visible = ESPEnabled
+
+    game:GetService("RunService").RenderStepped:Connect(function()
+        local camera = game.Workspace.CurrentCamera
+        local cameraPosition = camera.CFrame.Position
+        FOVCircle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
+    end)
+end
+
+-- Função para atualizar ESP
+local function UpdateESP()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            if not player.Character.Head:FindFirstChild("ESP") then
+                CreateESP(player)
+            end
+        end
+    end
+end
+
+-- Ativar/Desativar ESP
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.ButtonA then -- Botão A para dispositivos móveis
+        ESPEnabled = not ESPEnabled
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("Head") then
+                local ESP = player.Character.Head:FindFirstChild("ESP")
+                if ESP then
+                    ESP.Enabled = ESPEnabled
+                end
+            end
+        end
+    end
+end)
+
+-- Inicializar
+CreateFOV()
+game:GetService("RunService").RenderStepped:Connect(UpdateESP)
